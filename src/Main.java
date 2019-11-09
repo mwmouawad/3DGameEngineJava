@@ -7,25 +7,30 @@ import javafx.scene.Group;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.canvas.Canvas;
 import javafx.animation.AnimationTimer;
-
+import javafx.scene.input.KeyEvent;
+import javafx.event.EventHandler;
 import java.awt.*;
 import java.sql.SQLOutput;
+import java.util.LinkedList;
 
 public class Main extends Application {
+
+    boolean xForward, xBackward, yForward, yBackward;
 
     @Override
     public void start(Stage stage) {
 
 
+        double deltaZ = 100;
 
-        Point3D pointA = new Point3D(548.45f,585.96,0f);
-        Point3D pointB = new Point3D(126.43f,768.27f,0f);
-        Point3D pointC = new Point3D(90.57f,626.68f,403.16f);
-        Point3D pointD = new Point3D(482.6f,444.36f,403.16f);
-        Point3D pointE = new Point3D(718.46f,951.52f,156.16f);
-        Point3D pointF = new Point3D(326.43f,1133.84,156.16f);
-        Point3D pointG = new Point3D(260.58f,992.24f,559.32f);
-        Point3D pointH = new Point3D(652.61f,809.92,559.32f);
+        Point3D pointA = new Point3D(548.45f,585.96,0f + deltaZ);
+        Point3D pointB = new Point3D(126.43f,768.27f,0f+ deltaZ);
+        Point3D pointC = new Point3D(90.57f,626.68f,403.16f+ deltaZ);
+        Point3D pointD = new Point3D(482.6f,444.36f,403.16f+ deltaZ);
+        Point3D pointE = new Point3D(718.46f,951.52f,156.16f+ deltaZ);
+        Point3D pointF = new Point3D(326.43f,1133.84,156.16f+ deltaZ);
+        Point3D pointG = new Point3D(260.58f,992.24f,559.32f+ deltaZ);
+        Point3D pointH = new Point3D(652.61f,809.92,559.32f+ deltaZ);
 
         Group root = new Group();
 
@@ -37,9 +42,41 @@ public class Main extends Application {
 
 
 
+        Cube cube = new Cube(pointA, pointB,pointC,pointD,pointE,pointF,pointG, pointH);
+
+        double scaleFactor = 500;
+        Plane cameraPlane = new Plane( new Point3D(0,0-scaleFactor,0), new Vector3D(0,3,0));
+
+        CameraScreen cameraScreen = new CameraScreen(new Point3D(-5,0,0), cameraPlane);
+
+        //Scene Event
+        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                switch (event.getCode()) {
+                    case UP:    yBackward = true; break;
+                    case DOWN:  yForward = true; break;
+                    case RIGHT: xForward  = true; break;
+
+                    case LEFT:  xBackward  = true; break;
+                }
+            }
+        });
+
+        scene.setOnKeyReleased(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                switch (event.getCode()) {
+                    case UP:    yBackward = false; break;
+                    case DOWN:  yForward = false; break;
+                    case LEFT:  xBackward  = false; break;
+                    case RIGHT: xForward  = false; break;
+                }
+            }
+        });
 
 
-
+        stage.setTitle("Inverno engine");
 
         stage.setScene(scene);
         stage.show();
@@ -50,33 +87,66 @@ public class Main extends Application {
             {
                 double t = (currentNanoTime - startNanoTime) / 1000000000.0;
 
-                Cube cube1 = new Cube(pointA, pointB,pointC,pointD,pointE,pointF,pointG, pointH);
 
-                Cube cube = new Cube(Cube.rotateCubeOnY(cube1, -(float)(Math.PI/t)));
-
-
-                Point3D rotatedA = Rotations.rotatePointOnYByThetaAngle(pointA, (float)(0));
-
-                System.out.println(t);
-
-                System.out.println(rotatedA.x);
-                System.out.println(rotatedA.y);
-                System.out.println(rotatedA.z);
+                //Cube cube = new Cube(Cube.rotateCubeOnY(cube1, -(float)(Math.PI/t)));
 
 
+                //Point3D rotatedA = Rotations.rotatePointOnYByThetaAngle(pointA, (float)(0));
 
-                Line lineAB = lineBetweenPoints(To2DProjection(cube.pointA), To2DProjection(cube.pointB));
-                Line lineCD = lineBetweenPoints(To2DProjection(cube.pointC), To2DProjection(cube.pointD));
-                Line lineAD = lineBetweenPoints(To2DProjection(cube.pointA), To2DProjection(cube.pointD));
-                Line lineCB = lineBetweenPoints(To2DProjection(cube.pointC), To2DProjection(cube.pointB));
-                Line lineGH = lineBetweenPoints(To2DProjection(cube.pointG), To2DProjection(cube.pointH));
-                Line lineFE = lineBetweenPoints(To2DProjection(cube.pointF), To2DProjection(cube.pointE));
-                Line lineAE = lineBetweenPoints(To2DProjection(cube.pointA), To2DProjection(cube.pointE));
-                Line lineBF = lineBetweenPoints(To2DProjection(cube.pointB), To2DProjection(cube.pointF));
-                Line lineDH = lineBetweenPoints(To2DProjection(cube.pointD), To2DProjection(cube.pointH));
-                Line lineCG = lineBetweenPoints(To2DProjection(cube.pointC), To2DProjection(cube.pointG));
-                Line lineHE = lineBetweenPoints(To2DProjection(cube.pointH), To2DProjection(cube.pointE));
-                Line lineGF = lineBetweenPoints(To2DProjection(cube.pointG), To2DProjection(cube.pointF));
+                double deltaMoveY = 5;
+                double deltaMoveX = 5;
+
+                if(yForward){
+                    cameraScreen.setPlaneConstant( cameraScreen.getScreenPlane().getConstant() + deltaMoveY);
+                }
+                if(yBackward){
+                    cameraScreen.setPlaneConstant( cameraScreen.getScreenPlane().getConstant() - deltaMoveY);
+                }
+
+
+                Point3D oldCameraCoordinates = cameraScreen.getCameraCoordinates();
+                double newCameraX = xBackward ? oldCameraCoordinates.x - deltaMoveX : oldCameraCoordinates.x;
+
+                double newCameraY = yForward ? oldCameraCoordinates.y + deltaMoveY : oldCameraCoordinates.y;
+                newCameraY = yForward ? oldCameraCoordinates.y - deltaMoveY : oldCameraCoordinates.y;
+
+                if(xForward){
+                    newCameraX = oldCameraCoordinates.x + deltaMoveX;
+                }
+
+                cameraScreen.setCameraCoordinates(newCameraX,newCameraY, oldCameraCoordinates.z );
+
+                LinkedList<Point3D> linkedListProjectedPoints = new LinkedList();
+
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointA, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointB, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointC, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointD, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointE, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointF, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointG, cameraScreen,true));
+                linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointH, cameraScreen,true));
+
+
+
+
+
+
+
+
+
+                Line lineAB = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(0)), To2DProjection(linkedListProjectedPoints.get(1)));
+                Line lineCD = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(2)), To2DProjection(linkedListProjectedPoints.get(3)));
+                Line lineAD = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(0)), To2DProjection(linkedListProjectedPoints.get(3)));
+                Line lineCB = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(2)), To2DProjection(linkedListProjectedPoints.get(1)));
+                Line lineGH = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(6)), To2DProjection(linkedListProjectedPoints.get(7)));
+                Line lineFE = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(5)), To2DProjection(linkedListProjectedPoints.get(4)));
+                Line lineAE = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(0)), To2DProjection(linkedListProjectedPoints.get(4)));
+                Line lineBF = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(1)), To2DProjection(linkedListProjectedPoints.get(5)));
+                Line lineDH = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(3)), To2DProjection(linkedListProjectedPoints.get(7)));
+                Line lineCG = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(2)), To2DProjection(linkedListProjectedPoints.get(6)));
+                Line lineHE = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(7)), To2DProjection(linkedListProjectedPoints.get(4)));
+                Line lineGF = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(6)), To2DProjection(linkedListProjectedPoints.get(5)));
 
 
 
@@ -194,9 +264,9 @@ class Cube{
 }
 
 
-class Rotations{
+class Rotations {
 
-    public static Point3D rotatePointOnZByThetaAngle(Point3D inputPoint, float theta){
+    public static Point3D rotatePointOnZByThetaAngle(Point3D inputPoint, float theta) {
 
         Point3D rotatedPoint;
 
@@ -209,27 +279,27 @@ class Rotations{
 
     }
 
-    public static Point3D rotatePointOnYByThetaAngle(Point3D inputPoint, float theta){
+    public static Point3D rotatePointOnYByThetaAngle(Point3D inputPoint, float theta) {
 
         Point3D rotatedPoint;
 
         double rotatedX = Math.cos(theta) * inputPoint.x + inputPoint.y * Math.sin(theta);
 
         double rotatedY = inputPoint.y;
-        double rotatedZ = -Math.sin(theta)*inputPoint.x + Math.cos(theta) * inputPoint.z;
+        double rotatedZ = -Math.sin(theta) * inputPoint.x + Math.cos(theta) * inputPoint.z;
 
         return rotatedPoint = new Point3D(rotatedX, rotatedY, rotatedZ);
 
 
     }
 
-    public static Point3D rotatePointOnXByThetaAngle(Point3D inputPoint, float theta){
+    public static Point3D rotatePointOnXByThetaAngle(Point3D inputPoint, float theta) {
 
         Point3D rotatedPoint;
 
         double rotatedX = inputPoint.x;
         double rotatedY = -Math.sin(theta) * inputPoint.z + Math.cos(theta) * inputPoint.y;
-        double rotatedZ = Math.sin(theta)*inputPoint.y + Math.cos(theta) * inputPoint.z;
+        double rotatedZ = Math.sin(theta) * inputPoint.y + Math.cos(theta) * inputPoint.z;
 
         return rotatedPoint = new Point3D(rotatedX, rotatedY, rotatedZ);
 
