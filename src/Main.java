@@ -21,7 +21,7 @@ public class Main extends Application {
     public void start(Stage stage) {
 
 
-        double deltaZ = 100;
+        double deltaZ = 200;
 
         Point3D pointA = new Point3D(548.45f,585.96,0f + deltaZ);
         Point3D pointB = new Point3D(126.43f,768.27f,0f+ deltaZ);
@@ -42,9 +42,9 @@ public class Main extends Application {
 
 
 
-        Cube cube = new Cube(pointA, pointB,pointC,pointD,pointE,pointF,pointG, pointH);
+        Cube cube1 = new Cube(pointA, pointB,pointC,pointD,pointE,pointF,pointG, pointH);
 
-        double scaleFactor = 500;
+        double scaleFactor = 300;
         Plane cameraPlane = new Plane( new Point3D(0,0-scaleFactor,0), new Vector3D(0,3,0));
 
         CameraScreen cameraScreen = new CameraScreen(new Point3D(-5,0,0), cameraPlane);
@@ -76,7 +76,7 @@ public class Main extends Application {
         });
 
 
-        stage.setTitle("Inverno engine");
+        stage.setTitle("Inverno 3D Engine");
 
         stage.setScene(scene);
         stage.show();
@@ -88,7 +88,7 @@ public class Main extends Application {
                 double t = (currentNanoTime - startNanoTime) / 1000000000.0;
 
 
-                //Cube cube = new Cube(Cube.rotateCubeOnY(cube1, -(float)(Math.PI/t)));
+                Cube cube = new Cube(Cube.rotateCubeOnX(cube1, -(float)(Math.PI/t)));
 
 
                 //Point3D rotatedA = Rotations.rotatePointOnYByThetaAngle(pointA, (float)(0));
@@ -116,6 +116,8 @@ public class Main extends Application {
 
                 cameraScreen.setCameraCoordinates(newCameraX,newCameraY, oldCameraCoordinates.z );
 
+
+                //Make Projections
                 LinkedList<Point3D> linkedListProjectedPoints = new LinkedList();
 
                 linkedListProjectedPoints.add(CameraScreen.perspectiveProjectionOntoCameraScreen(cube.pointA, cameraScreen,true));
@@ -132,9 +134,7 @@ public class Main extends Application {
 
 
 
-
-
-
+                //Set 2D Lines and Projections in screen.
                 Line lineAB = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(0)), To2DProjection(linkedListProjectedPoints.get(1)));
                 Line lineCD = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(2)), To2DProjection(linkedListProjectedPoints.get(3)));
                 Line lineAD = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(0)), To2DProjection(linkedListProjectedPoints.get(3)));
@@ -149,6 +149,7 @@ public class Main extends Application {
                 Line lineGF = lineBetweenPoints(To2DProjection(linkedListProjectedPoints.get(6)), To2DProjection(linkedListProjectedPoints.get(5)));
 
 
+                //Vertex Lines
 
 
                 Group root = new Group(lineAB, lineCD, lineAD, lineCB, lineAE, lineDH, lineCG, lineBF, lineGH, lineFE, lineHE, lineGF  );
